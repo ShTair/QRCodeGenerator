@@ -1,4 +1,5 @@
 ﻿using Gma.QrCodeNet.Encoding;
+using ShComp;
 using System;
 using System.IO;
 using System.Linq;
@@ -35,6 +36,8 @@ namespace QRCodeGenerator
 
                 var qre = new QrEncoder(ecl);
                 var qrc = qre.Encode(data);
+                var m = qrc.Matrix.InternalArray;
+                var commands = PathCommandGenerator.Generate((x, y) => m[x, y], qrc.Matrix.Width, qrc.Matrix.Height);
 
                 var path = Path.GetExtension(arg).Equals(".svg", StringComparison.CurrentCultureIgnoreCase) ? arg + ".svg" : Path.ChangeExtension(arg, ".svg");
                 using (var writer = new StreamWriter(path, false))
@@ -43,7 +46,7 @@ namespace QRCodeGenerator
                     writer.WriteLine($@"<svg xmlns=""http://www.w3.org/2000/svg"" viewBox=""0 0 {qrc.Matrix.Width + 8} {qrc.Matrix.Height + 8}"">");
                     writer.Write(@"<path d=""");
 
-                    foreach (var command in qrc.ConvertPathCommand())
+                    foreach (var command in commands)
                     {
                         writer.Write(command.ToString(4, 4));
                     }
