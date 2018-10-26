@@ -36,9 +36,9 @@ namespace QRCodeGenerator
                 var qr = new QRCoder.QRCodeGenerator();
                 var qrcd = qr.CreateQrCode(data, ecl);
                 var matrix = qrcd.ModuleMatrix;
-                var width = matrix[0].Count;
-                var height = matrix.Count;
-                var commands = PathCommandGenerator.Generate((x, y) => matrix[y].Get(x), width, height);
+                var width = matrix[0].Count - 8;
+                var height = matrix.Count - 8;
+                var commands = PathCommandGenerator.Generate((x, y) => matrix[y + 4].Get(x + 4), width, height);
 
                 var path = Path.GetExtension(arg).Equals(".svg", StringComparison.CurrentCultureIgnoreCase) ? arg + ".svg" : Path.ChangeExtension(arg, ".svg");
                 using (var writer = new StreamWriter(path, false))
