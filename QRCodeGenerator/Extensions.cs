@@ -25,10 +25,20 @@ namespace QRCodeGenerator
         /// </summary>
         public static IEnumerable<PathCommand> ConvertPathCommand(this QrCode qrc)
         {
-            var plz = new List<_>();
             var m = qrc.Matrix.InternalArray;
-            var w = qrc.Matrix.Width;
-            var h = qrc.Matrix.Height;
+            return ConvertPathCommand(m);
+        }
+
+        /// <summary>
+        /// このQRコードを、WPFやSVGのパス命令に変換します。
+        /// </summary>
+        public static IEnumerable<PathCommand> ConvertPathCommand(this bool[,] m)
+        {
+            var plz = new List<_>();
+
+            var w = m.GetLength(0);
+            var h = m.GetLength(1);
+
             for (int y = 0; y < h; y++)
             {
                 for (int x = 0; x < w; x++)
