@@ -59,7 +59,7 @@
         if (Url is { })
         {
             if (string.IsNullOrEmpty(new Uri(Url).Host)) Nav.NavigateTo(Url, false, true);
-            else Nav.NavigateTo(Nav.BaseUri, false, true);
+            else Nav.NavigateTo(string.Empty, false, true);
             return;
         }
 
@@ -110,8 +110,8 @@
         if (_model is null) return;
 
         var uri = string.IsNullOrEmpty(_model.Body)
-            ? Nav.BaseUri
-            : $"{Nav.BaseUri}?body={Uri.EscapeDataString(_model.Body)}";
+            ? string.Empty
+            : $"?body={Uri.EscapeDataString(_model.Body)}";
 
         Nav.NavigateTo(uri, false, true);
     }
