@@ -1,13 +1,53 @@
 @page "/"
+@using BlazorTemplater
+@using QRCodeGenerator.Pages.Atoms
+@using QRCoder
+@using System.Text
+@using System.ComponentModel.DataAnnotations
 @inject NavigationManager Nav
+@inject IJSRuntime JS
 
 <PageTitle>Home</PageTitle>
 
 <h1>Hello, world!</h1>
 
-Welcome to your new app.
+<div class="container-fluid mt-3">
+    <EditForm class="row gy-3" Model="_model" OnValidSubmit="OnGenerateAsync">
+        <DataAnnotationsValidator />
+
+        <div class="col-12">
+            <label class="form-label" for="ECCLevelBox">誤り訂正レベル</label>
+            <InputSelect class="form-select" id="ECCLevelBox" TValue="QRCodeGenerator.ECCLevel" @bind-Value="_model!.Level">
+                <option value="@QRCodeGenerator.ECCLevel.L">レベルL（7%）</option>
+                <option value="@QRCodeGenerator.ECCLevel.M">レベルM（15%）</option>
+                <option value="@QRCodeGenerator.ECCLevel.Q">レベルQ（25%）</option>
+                <option value="@QRCodeGenerator.ECCLevel.H">レベルH（30%）</option>
+            </InputSelect>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label" for="BodyBox">内容</label>
+            <InputTextArea class="form-control" rows="3" id="BodyBox" @bind-Value="_model!.Body" />
+        </div>
+
+        <div class="col-12">
+            <label class="form-label" for="BodyBox">プレビュー</label>
+            <div class="ratio ratio-1x1 border border-1 border-dark rounded rounded-2">
+                <QRCodeSvg Level="@_model.Level" Body="@_model.Body" />
+            </div>
+        </div>
+
+        <div class="col-12">
+            <button class="btn btn-success w-100">保存</button>
+        </div>
+    </EditForm>
+</div>
 
 @code {
+    private const int _nameLength = 30;
+
+    private InputModel? _model;
+
     [SupplyParameterFromQuery(Name = "url")]
     private string? Url { get; set; }
 
@@ -19,5 +59,39 @@ Welcome to your new app.
             else Nav.NavigateTo(Nav.BaseUri, false, true);
             return;
         }
+
+        _model = new InputModel();
+    }
+
+    private async Task OnGenerateAsync()
+    {
+        var svg = new ComponentRenderer<QRCodeSvg>().Set(t => t.Level, _model!.Level).Set(t => t.Body, _model!.Body).Render();
+
+        using var stream = new MemoryStream();
+        using var writer = new StreamWriter(stream, Encoding.UTF8);
+
+        writer.Write(@"<?xml version=""1.0"" encoding=""utf-8""?>");
+        writer.Write(svg);
+        writer.Flush();
+
+        stream.Position = 0;
+        using var streamRef = new DotNetStreamReference(stream);
+
+        var name = $"qrcode_{_model.Level}_{Trim(_model.Body!)}.svg";
+        await JS.InvokeVoidAsync("downloadFileFromStream", name, streamRef);
+    }
+
+    private string Trim(string src)
+    {
+        if (src.Length < _nameLength) return src;
+        return src.Remove(_nameLength);
+    }
+
+    private class InputModel
+    {
+        public QRCodeGenerator.ECCLevel Level { get; set; }
+
+        [Required]
+        public string? Body { get; set; }
     }
 }

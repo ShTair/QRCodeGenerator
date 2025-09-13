@@ -1,0 +1,39 @@
+@using QRCoder
+@implements IDisposable
+
+@{
+    if (string.IsNullOrEmpty(Body)) return;
+
+    var data = _generator!.CreateQrCode(Body, Level);
+    var size = data.ModuleMatrix.Count;
+
+    var commands = PathCommandGenerator.Generate((x, y) => data.ModuleMatrix[y][x], size, size);
+    var pathData = string.Concat(commands.Select(t => t.ToString(-4, -4)));
+}
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-4 -4 @size @size" @attributes="AdditionalAttributes">
+    <path d="@pathData" shape-rendering="crispEdges" />
+</svg>
+
+@code {
+    private QRCodeGenerator? _generator;
+
+    [Parameter, EditorRequired]
+    public QRCodeGenerator.ECCLevel Level { get; set; }
+
+    [Parameter, EditorRequired]
+    public string? Body { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IDictionary<string, object>? AdditionalAttributes { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _generator = new QRCodeGenerator();
+    }
+
+    public void Dispose()
+    {
+        _generator?.Dispose();
+    }
+}
