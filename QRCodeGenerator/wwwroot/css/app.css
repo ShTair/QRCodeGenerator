@@ -118,6 +118,11 @@ code {
     width: 400px;
 }
 
+.qr-preview-sm {
+    display: none;
+    margin: 0 auto;
+}
+
 @media (max-width: 600px) {
     .qr-container {
         width: 400px;
@@ -130,7 +135,11 @@ code {
         width: 100%;
     }
 
-    .qr-preview {
-        margin-bottom: 1rem;
+    .qr-preview-lg {
+        display: none;
+    }
+
+    .qr-preview-sm {
+        display: block;
     }
 }
