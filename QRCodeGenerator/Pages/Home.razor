@@ -27,7 +27,7 @@
 
         <div class="col-12">
             <label class="form-label" for="BodyBox">内容</label>
-            <InputTextArea class="form-control" rows="3" id="BodyBox" @bind-Value="_model!.Body" />
+            <InputTextArea class="form-control" rows="3" id="BodyBox" @bind-Value="Body" @bind-Value:event="oninput" />
         </div>
 
         <div class="col-12">
@@ -51,6 +51,9 @@
     [SupplyParameterFromQuery(Name = "url")]
     private string? Url { get; set; }
 
+    [SupplyParameterFromQuery(Name = "body")]
+    private string? BodyQuery { get; set; }
+
     protected override void OnInitialized()
     {
         if (Url is { })
@@ -60,7 +63,17 @@
             return;
         }
 
-        _model = new InputModel();
+        _model = new InputModel { Body = BodyQuery };
+    }
+
+    protected override void OnParametersSet()
+    {
+        _model ??= new InputModel();
+
+        if (_model.Body != BodyQuery)
+        {
+            _model.Body = BodyQuery;
+        }
     }
 
     private async Task OnGenerateAsync()
@@ -79,6 +92,28 @@
 
         var name = $"qrcode_{_model.Level}_{Trim(_model.Body!)}.svg";
         await JS.InvokeVoidAsync("downloadFileFromStream", name, streamRef);
+    }
+
+    private string? Body
+    {
+        get => _model?.Body;
+        set
+        {
+            if (_model is null) return;
+            _model.Body = value;
+            UpdateUri();
+        }
+    }
+
+    private void UpdateUri()
+    {
+        if (_model is null) return;
+
+        var uri = string.IsNullOrEmpty(_model.Body)
+            ? Nav.BaseUri
+            : $"{Nav.BaseUri}?body={Uri.EscapeDataString(_model.Body)}";
+
+        Nav.NavigateTo(uri, false, true);
     }
 
     private string Trim(string src)
