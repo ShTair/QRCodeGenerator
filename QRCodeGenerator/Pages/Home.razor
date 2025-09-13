@@ -27,7 +27,7 @@
 
         <div class="col-12">
             <label class="form-label" for="BodyBox">内容</label>
-            <InputTextArea class="form-control" rows="3" id="BodyBox" @bind-Value="Body" @bind-Value:event="oninput" />
+            <textarea class="form-control" rows="3" id="BodyBox" @bind="Body" @bind:event="oninput"></textarea>
         </div>
 
         <div class="col-12">
