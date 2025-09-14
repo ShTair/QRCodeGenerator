@@ -1,6 +1,6 @@
 {
-  "name": "QRCodeGenerator",
-  "short_name": "QRCodeGenerator",
+  "name": "QR Maker",
+  "short_name": "QR Maker",
   "id": "./",
   "start_url": "./",
   "display": "standalone",
