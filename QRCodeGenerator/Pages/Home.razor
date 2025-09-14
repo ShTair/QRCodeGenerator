@@ -15,16 +15,16 @@
     <div class="qr-preview qr-preview-lg">
         <label class="form-label">プレビュー</label>
         <div class="qr-image border border-1 border-dark rounded rounded-2">
-            <QRCodeSvg Level="@_model!.Level" Body="@_model!.Body" width="100%" height="100%" />
+            <QRCodeSvg Level="@Level" Body="@Body" width="100%" height="100%" />
         </div>
     </div>
 
-    <EditForm class="qr-form d-flex flex-column gap-3" Model="_model" OnValidSubmit="OnGenerateAsync">
+    <EditForm class="qr-form d-flex flex-column gap-3" EditContext="_editContext" OnValidSubmit="OnGenerateAsync">
         <DataAnnotationsValidator />
 
         <div>
             <label class="form-label" for="ECCLevelBox">誤り訂正レベル</label>
-            <InputSelect class="form-select" id="ECCLevelBox" TValue="QRCodeGenerator.ECCLevel" @bind-Value="_model!.Level">
+            <InputSelect class="form-select" id="ECCLevelBox" TValue="QRCodeGenerator.ECCLevel" @bind-Value="Level">
                 <option value="@QRCodeGenerator.ECCLevel.L">レベルL（7%）</option>
                 <option value="@QRCodeGenerator.ECCLevel.M">レベルM（15%）</option>
                 <option value="@QRCodeGenerator.ECCLevel.Q">レベルQ（25%）</option>
@@ -40,7 +40,7 @@
         <div class="qr-preview qr-preview-sm">
             <label class="form-label">プレビュー</label>
             <div class="qr-image border border-1 border-dark rounded rounded-2">
-                <QRCodeSvg Level="@_model!.Level" Body="@_model!.Body" width="100%" height="100%" />
+                <QRCodeSvg Level="@Level" Body="@Body" width="100%" height="100%" />
             </div>
         </div>
 
@@ -53,13 +53,18 @@
 @code {
     private const int _nameLength = 30;
 
-    private InputModel? _model;
+    private EditContext _editContext = default!;
 
     [SupplyParameterFromQuery(Name = "url")]
     private string? Url { get; set; }
 
     [SupplyParameterFromQuery(Name = "body")]
     private string? BodyQuery { get; set; }
+
+    public QRCodeGenerator.ECCLevel Level { get; set; }
+
+    [Required]
+    public string? Body { get; set; }
 
     protected override void OnInitialized()
     {
@@ -70,22 +75,28 @@
             return;
         }
 
-        _model = new InputModel { Body = BodyQuery };
+        Body = BodyQuery;
+        _editContext = new EditContext(this);
+        _editContext.OnFieldChanged += (_, e) =>
+        {
+            if (e.FieldIdentifier.FieldName == nameof(Body))
+            {
+                UpdateUri();
+            }
+        };
     }
 
     protected override void OnParametersSet()
     {
-        _model ??= new InputModel();
-
-        if (_model.Body != BodyQuery)
+        if (Body != BodyQuery)
         {
-            _model.Body = BodyQuery;
+            Body = BodyQuery;
         }
     }
 
     private async Task OnGenerateAsync()
     {
-        var svg = new ComponentRenderer<QRCodeSvg>().Set(t => t.Level, _model!.Level).Set(t => t.Body, _model!.Body).Render();
+        var svg = new ComponentRenderer<QRCodeSvg>().Set(t => t.Level, Level).Set(t => t.Body, Body!).Render();
 
         using var stream = new MemoryStream();
         using var writer = new StreamWriter(stream, Encoding.UTF8);
@@ -97,28 +108,15 @@
         stream.Position = 0;
         using var streamRef = new DotNetStreamReference(stream);
 
-        var name = $"qrcode_{_model.Level}_{Trim(_model.Body!)}.svg";
+        var name = $"qrcode_{Level}_{Trim(Body!)}.svg";
         await JS.InvokeVoidAsync("downloadFileFromStream", name, streamRef);
-    }
-
-    private string? Body
-    {
-        get => _model?.Body;
-        set
-        {
-            if (_model is null) return;
-            _model.Body = value;
-            UpdateUri();
-        }
     }
 
     private void UpdateUri()
     {
-        if (_model is null) return;
-
-        var uri = string.IsNullOrEmpty(_model.Body)
+        var uri = string.IsNullOrEmpty(Body)
             ? string.Empty
-            : $"?body={Uri.EscapeDataString(_model.Body)}";
+            : $"?body={Uri.EscapeDataString(Body)}";
 
         Nav.NavigateTo(uri, false, true);
     }
@@ -129,11 +127,4 @@
         return src.Remove(_nameLength);
     }
 
-    private class InputModel
-    {
-        public QRCodeGenerator.ECCLevel Level { get; set; }
-
-        [Required]
-        public string? Body { get; set; }
-    }
 }
