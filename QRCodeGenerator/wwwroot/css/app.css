@@ -103,10 +103,11 @@ code {
     max-width: 100%;
     margin: 1rem auto 0 auto;
     display: flex;
+    gap: 1rem;
 }
 
 .qr-preview {
-    width: 200px;
+    flex: 0 0 200px;
 }
 
 .qr-image {
@@ -115,7 +116,8 @@ code {
 }
 
 .qr-form {
-    width: 400px;
+    flex: 1;
+    max-width: 400px;
 }
 
 .qr-preview-sm {
@@ -133,6 +135,7 @@ code {
 
     .qr-form {
         width: 100%;
+        max-width: none;
     }
 
     .qr-preview-lg {
