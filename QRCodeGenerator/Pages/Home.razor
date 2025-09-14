@@ -11,47 +11,43 @@
 
 <h1>QRCodeGenerator</h1>
 
-<div class="container-fluid mt-3">
-    <div class="row gy-3">
-        <div class="col-lg-6 d-none d-lg-block">
+<div class="qr-container mt-3">
+    <div class="qr-preview qr-preview-lg">
+        <label class="form-label">プレビュー</label>
+        <div class="qr-image border border-1 border-dark rounded rounded-2">
+            <QRCodeSvg Level="@_model!.Level" Body="@_model!.Body" width="100%" height="100%" />
+        </div>
+    </div>
+
+    <EditForm class="qr-form d-flex flex-column gap-3" Model="_model" OnValidSubmit="OnGenerateAsync">
+        <DataAnnotationsValidator />
+
+        <div>
+            <label class="form-label" for="ECCLevelBox">誤り訂正レベル</label>
+            <InputSelect class="form-select" id="ECCLevelBox" TValue="QRCodeGenerator.ECCLevel" @bind-Value="_model!.Level">
+                <option value="@QRCodeGenerator.ECCLevel.L">レベルL（7%）</option>
+                <option value="@QRCodeGenerator.ECCLevel.M">レベルM（15%）</option>
+                <option value="@QRCodeGenerator.ECCLevel.Q">レベルQ（25%）</option>
+                <option value="@QRCodeGenerator.ECCLevel.H">レベルH（30%）</option>
+            </InputSelect>
+        </div>
+
+        <div>
+            <label class="form-label" for="BodyBox">内容</label>
+            <textarea class="form-control" rows="3" id="BodyBox" @bind="Body" @bind:event="oninput"></textarea>
+        </div>
+
+        <div class="qr-preview qr-preview-sm">
             <label class="form-label">プレビュー</label>
-            <div class="ratio ratio-1x1 border border-1 border-dark rounded rounded-2">
-                <QRCodeSvg Level="@_model!.Level" Body="@_model!.Body" />
+            <div class="qr-image border border-1 border-dark rounded rounded-2">
+                <QRCodeSvg Level="@_model!.Level" Body="@_model!.Body" width="100%" height="100%" />
             </div>
         </div>
 
-        <div class="col-12 col-lg-6">
-            <EditForm class="row gy-3" Model="_model" OnValidSubmit="OnGenerateAsync">
-                <DataAnnotationsValidator />
-
-                <div class="col-12">
-                    <label class="form-label" for="ECCLevelBox">誤り訂正レベル</label>
-                    <InputSelect class="form-select" id="ECCLevelBox" TValue="QRCodeGenerator.ECCLevel" @bind-Value="_model!.Level">
-                        <option value="@QRCodeGenerator.ECCLevel.L">レベルL（7%）</option>
-                        <option value="@QRCodeGenerator.ECCLevel.M">レベルM（15%）</option>
-                        <option value="@QRCodeGenerator.ECCLevel.Q">レベルQ（25%）</option>
-                        <option value="@QRCodeGenerator.ECCLevel.H">レベルH（30%）</option>
-                    </InputSelect>
-                </div>
-
-                <div class="col-12">
-                    <label class="form-label" for="BodyBox">内容</label>
-                    <textarea class="form-control" rows="3" id="BodyBox" @bind="Body" @bind:event="oninput"></textarea>
-                </div>
-
-                <div class="col-12 d-lg-none">
-                    <label class="form-label">プレビュー</label>
-                    <div class="ratio ratio-1x1 border border-1 border-dark rounded rounded-2">
-                        <QRCodeSvg Level="@_model!.Level" Body="@_model!.Body" />
-                    </div>
-                </div>
-
-                <div class="col-12">
-                    <button class="btn btn-success w-100">保存</button>
-                </div>
-            </EditForm>
+        <div>
+            <button class="btn btn-success w-100">保存</button>
         </div>
-    </div>
+    </EditForm>
 </div>
 
 @code {

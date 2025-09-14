@@ -1,7 +1,13 @@
 .page {
     padding: 1rem;
     width: 100%;
-    max-width: 300px;
+    max-width: 600px;
     margin-left: auto;
     margin-right: auto;
+}
+
+@media (max-width: 600px) {
+    .page {
+        max-width: 400px;
+    }
 }
