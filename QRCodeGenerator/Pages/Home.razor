@@ -45,6 +45,14 @@
         </div>
 
         <div>
+            <label class="form-label" for="FormatBox">保存形式</label>
+            <InputSelect class="form-select" id="FormatBox" TValue="ExportFormat" @bind-Value="Format">
+                <option value="@ExportFormat.Svg">SVG</option>
+                <option value="@ExportFormat.Png">PNG</option>
+            </InputSelect>
+        </div>
+
+        <div>
             <button class="btn btn-success w-100">保存</button>
         </div>
     </EditForm>
@@ -52,6 +60,7 @@
 
 @code {
     private const int _nameLength = 30;
+    private const int PngPixelsPerModule = 20;
 
     private EditContext _editContext = default!;
 
@@ -65,6 +74,8 @@
 
     [Required]
     public string? Body { get; set; }
+
+    public ExportFormat Format { get; set; } = ExportFormat.Svg;
 
     protected override void OnInitialized()
     {
@@ -96,21 +107,54 @@
 
     private async Task OnGenerateAsync()
     {
-        var svg = new ComponentRenderer<QRCodeSvg>().Set(t => t.Level, Level).Set(t => t.Body, Body!).Render();
+        if (Body is null) return;
 
-        using var stream = new MemoryStream();
-        using var writer = new StreamWriter(stream, Encoding.UTF8);
+        using var stream = Format switch
+        {
+            ExportFormat.Svg => CreateSvgStream(Body),
+            ExportFormat.Png => CreatePngStream(Body),
+            _ => throw new InvalidOperationException($"Unknown format: {Format}")
+        };
+
+        stream.Position = 0;
+        using var streamRef = new DotNetStreamReference(stream);
+
+        var name = $"qrcode_{Level}_{Trim(Body)}.{GetExtension(Format)}";
+        await JS.InvokeVoidAsync("downloadFileFromStream", name, streamRef);
+    }
+
+    private MemoryStream CreateSvgStream(string body)
+    {
+        var svg = new ComponentRenderer<QRCodeSvg>().Set(t => t.Level, Level).Set(t => t.Body, body).Render();
+
+        var stream = new MemoryStream();
+        using var writer = new StreamWriter(stream, Encoding.UTF8, bufferSize: 1024, leaveOpen: true);
 
         writer.Write(@"<?xml version=""1.0"" encoding=""utf-8""?>");
         writer.Write(svg);
         writer.Flush();
 
         stream.Position = 0;
-        using var streamRef = new DotNetStreamReference(stream);
-
-        var name = $"qrcode_{Level}_{Trim(Body!)}.svg";
-        await JS.InvokeVoidAsync("downloadFileFromStream", name, streamRef);
+        return stream;
     }
+
+    private MemoryStream CreatePngStream(string body)
+    {
+        using var generator = new QRCodeGenerator();
+        using var data = generator.CreateQrCode(body, Level);
+
+        var png = new PngByteQRCode(data);
+        var bytes = png.GetGraphic(PngPixelsPerModule);
+
+        return new MemoryStream(bytes);
+    }
+
+    private static string GetExtension(ExportFormat format) => format switch
+    {
+        ExportFormat.Svg => "svg",
+        ExportFormat.Png => "png",
+        _ => "txt"
+    };
 
     private void UpdateUri()
     {
@@ -125,6 +169,12 @@
     {
         if (src.Length < _nameLength) return src;
         return src.Remove(_nameLength);
+    }
+
+    public enum ExportFormat
+    {
+        Svg,
+        Png
     }
 
 }
