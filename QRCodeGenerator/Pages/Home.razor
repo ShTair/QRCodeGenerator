@@ -45,15 +45,12 @@
         </div>
 
         <div>
-            <label class="form-label">保存</label>
             <div class="d-flex gap-2">
                 <button type="button" class="btn btn-success flex-fill" @onclick="async () => await OnDownloadAsync(ExportFormat.Svg)">
-                    <span aria-hidden="true" class="me-1">⬇</span>
-                    SVG
+                    ⬇SVG
                 </button>
                 <button type="button" class="btn btn-success flex-fill" @onclick="async () => await OnDownloadAsync(ExportFormat.Png)">
-                    <span aria-hidden="true" class="me-1">⬇</span>
-                    PNG
+                    ⬇PNG
                 </button>
             </div>
         </div>
