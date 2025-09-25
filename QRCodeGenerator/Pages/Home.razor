@@ -19,7 +19,7 @@
         </div>
     </div>
 
-    <EditForm class="qr-form d-flex flex-column gap-3" EditContext="_editContext" OnValidSubmit="OnGenerateAsync">
+    <EditForm class="qr-form d-flex flex-column gap-3" EditContext="_editContext">
         <DataAnnotationsValidator />
 
         <div>
@@ -45,15 +45,17 @@
         </div>
 
         <div>
-            <label class="form-label" for="FormatBox">保存形式</label>
-            <InputSelect class="form-select" id="FormatBox" TValue="ExportFormat" @bind-Value="Format">
-                <option value="@ExportFormat.Svg">SVG</option>
-                <option value="@ExportFormat.Png">PNG</option>
-            </InputSelect>
-        </div>
-
-        <div>
-            <button class="btn btn-success w-100">保存</button>
+            <label class="form-label">保存</label>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-success flex-fill" @onclick="async () => await OnDownloadAsync(ExportFormat.Svg)">
+                    <span aria-hidden="true" class="me-1">⬇</span>
+                    SVG
+                </button>
+                <button type="button" class="btn btn-success flex-fill" @onclick="async () => await OnDownloadAsync(ExportFormat.Png)">
+                    <span aria-hidden="true" class="me-1">⬇</span>
+                    PNG
+                </button>
+            </div>
         </div>
     </EditForm>
 </div>
@@ -74,8 +76,6 @@
 
     [Required]
     public string? Body { get; set; }
-
-    public ExportFormat Format { get; set; } = ExportFormat.Svg;
 
     protected override void OnInitialized()
     {
@@ -105,21 +105,22 @@
         }
     }
 
-    private async Task OnGenerateAsync()
+    private async Task OnDownloadAsync(ExportFormat format)
     {
+        if (!_editContext.Validate()) return;
         if (Body is null) return;
 
-        using var stream = Format switch
+        using var stream = format switch
         {
             ExportFormat.Svg => CreateSvgStream(Body),
             ExportFormat.Png => CreatePngStream(Body),
-            _ => throw new InvalidOperationException($"Unknown format: {Format}")
+            _ => throw new InvalidOperationException($"Unknown format: {format}")
         };
 
         stream.Position = 0;
         using var streamRef = new DotNetStreamReference(stream);
 
-        var name = $"qrcode_{Level}_{Trim(Body)}.{GetExtension(Format)}";
+        var name = $"qrcode_{Level}_{Trim(Body)}.{GetExtension(format)}";
         await JS.InvokeVoidAsync("downloadFileFromStream", name, streamRef);
     }
 
